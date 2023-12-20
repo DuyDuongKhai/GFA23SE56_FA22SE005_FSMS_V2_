@@ -31,7 +31,7 @@ namespace FSMS.Service.Services.PlantCropHistoryServices
                 throw new Exception($"Error occurred while fetching season with Id {seasonId}", ex);
             }
         }
-        public async Task<List<GetPlantCropHistory>> GetAllAsync(string? gardenName = null, string? plantName = null, string? seasonName = null)
+        public async Task<List<GetPlantCropHistory>> GetAllAsync(string? gardenName = null, string? plantName = null, string? seasonName = null, int? gardenId = null, int? plantId = null, int? seasonId = null)
         {
             try
             {
@@ -42,7 +42,10 @@ namespace FSMS.Service.Services.PlantCropHistoryServices
                     .Where(pch =>
                         (gardenName == null || pch.Plant.Garden.GardenName == gardenName) &&
                         (plantName == null || pch.Plant.PlantName == plantName) &&
-                        (seasonName == null || GetSeasonNameAsync(pch.SeasonId).Result == seasonName));
+                        (seasonName == null || GetSeasonNameAsync(pch.SeasonId).Result == seasonName) &&
+                        (!gardenId.HasValue || pch.Plant.GardenId == gardenId) &&
+                        (!plantId.HasValue || pch.PlantId == plantId) &&
+                        (!seasonId.HasValue || pch.SeasonId == seasonId));
 
                 List<GetPlantCropHistory> result = plantCropHistories.Select(async plantCropHistory =>
                 {
@@ -58,6 +61,7 @@ namespace FSMS.Service.Services.PlantCropHistoryServices
                 throw new Exception("Error occurred while fetching plant crop history", ex);
             }
         }
+
 
 
 
@@ -83,6 +87,54 @@ namespace FSMS.Service.Services.PlantCropHistoryServices
                 throw new Exception(ex.Message);
             }
         }
+
+        public async Task<List<PlantHarvestStats>> GetPlantHarvestStatsAsync(string? plantName, int plantId)
+        {
+            try
+            {
+                IEnumerable<PlantCropHistory> plantCropHistories = await _plantCropHistoryRepository.GetAsync(includeProperties: "Plant,Plant.Garden");
+
+                // Lọc dữ liệu theo tên cây
+                plantCropHistories = plantCropHistories
+                     .Where(pch => (plantName == null || pch.Plant.PlantName == plantName) && (plantId == 0 || pch.PlantId == plantId));
+
+                // Tạo một danh sách để lưu trữ kết quả thống kê
+                List<PlantHarvestStats> statsList = new List<PlantHarvestStats>();
+
+                // Nhóm cây theo mùa và tính tổng số lượng cây thu hoạch trong mỗi mùa
+                var groupedBySeason = plantCropHistories.GroupBy(pch => new { pch.SeasonId, pch.PlantId });
+                foreach (var group in groupedBySeason)
+                {
+                    int seasonId = group.Key.SeasonId;
+                    int currentPlantId = group.Key.PlantId;
+                    string seasonName = await GetSeasonNameAsync(seasonId);
+
+                    // Lấy tổng quantity từ các PlantCropHistory trong group
+                    double totalHarvested = group.Sum(pch => pch.Quantity);
+
+                    // Tổng tổng số lượng thu hoạch qua tất cả các mùa
+
+                    // Tạo đối tượng PlantHarvestStats và thêm vào danh sách kết quả
+                    PlantHarvestStats stats = new PlantHarvestStats
+                    {
+                        PlantId = currentPlantId,
+                        PlantName = group.First().Plant.PlantName, // Lấy tên cây từ bất kỳ đối tượng nào trong group
+                        SeasonId = seasonId,
+                        SeasonName = seasonName,
+                        Quantity = group.Sum(pch => pch.Quantity),
+                    };
+
+                    statsList.Add(stats);
+                }
+
+                return statsList;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error occurred while fetching plant harvest statistics", ex);
+            }
+        }
+
 
 
     }

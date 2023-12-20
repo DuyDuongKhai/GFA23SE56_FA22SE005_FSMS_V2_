@@ -26,11 +26,11 @@ namespace FSMS.WebAPI.Controllers
         [Cache(1000)]
 
         [PermissionAuthorize("Farmer")]
-        public async Task<IActionResult> GetAll(string? gardenName = null, string? plantName = null, string? seasonName = null)
+        public async Task<IActionResult> GetAll(string? gardenName = null, string? plantName = null, string? seasonName = null, int? gardenId = null, int? plantId = null, int? seasonId = null)
         {
             try
             {
-                List<GetPlantCropHistory> plantCropHistories = await _plantCropHistoryService.GetAllAsync(gardenName, plantName, seasonName);
+                List<GetPlantCropHistory> plantCropHistories = await _plantCropHistoryService.GetAllAsync(gardenName, plantName, seasonName, gardenId, plantId, seasonId);
 
                 // Sắp xếp danh sách plantCropHistories theo ngày giảm dần
                 plantCropHistories = plantCropHistories.OrderByDescending(cf => cf.CreatedDate).ToList();
@@ -71,8 +71,30 @@ namespace FSMS.WebAPI.Controllers
                 });
             }
         }
+        [HttpGet("harvest-stats")]
+        // [PermissionAuthorize("Farmer")]
+
+        public async Task<IActionResult> GetPlantHarvestStats(string? plantName = null, int plantId = 0)
+        {
+            try
+            {
+                List<PlantHarvestStats> harvestStats = await _plantCropHistoryService.GetPlantHarvestStatsAsync(plantName, plantId);
+
+                return Ok(new
+                {
+                    Data = harvestStats
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new
+                {
+                    Message = ex.Message
+                });
+            }
 
 
 
+        }
     }
 }
