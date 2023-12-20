@@ -72,7 +72,7 @@ namespace FSMS.WebAPI.Controllers
             }
         }
         [HttpGet("harvest-stats")]
-        // [PermissionAuthorize("Farmer")]
+        [PermissionAuthorize("Farmer")]
 
         public async Task<IActionResult> GetPlantHarvestStats(string? plantName = null, int plantId = 0)
         {
