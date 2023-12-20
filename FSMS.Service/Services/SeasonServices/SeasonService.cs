@@ -120,7 +120,7 @@ namespace FSMS.Service.Services.SeasonServices
         }
 
 
-        public async Task<List<GetSeason>> GetAllSeasonsAsync(string? seasonName = null, DateTime? startDate = null, bool activeOnly = false)
+        public async Task<List<GetSeason>> GetAllSeasonsAsync(string? seasonName = null, DateTime? startDate = null, bool activeOnly = false, int? gardenId = null)
         {
             try
             {
@@ -128,6 +128,7 @@ namespace FSMS.Service.Services.SeasonServices
                     .Where(season =>
                         (string.IsNullOrEmpty(seasonName) || season.SeasonName.Contains(seasonName)) &&
                         (!startDate.HasValue || season.StartDate >= startDate) &&
+                        (!gardenId.HasValue || season.GardenId == gardenId) &&
                         (!activeOnly || season.Status == StatusEnums.Active.ToString())
                     );
 

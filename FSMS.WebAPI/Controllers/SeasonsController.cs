@@ -26,11 +26,11 @@ namespace FSMS.WebAPI.Controllers
         [HttpGet]
         [Cache(1000)]
         [PermissionAuthorize("Farmer")]
-        public async Task<IActionResult> GetAllSeasons(string? seasonName = null, DateTime? startDate = null, bool activeOnly = false)
+        public async Task<IActionResult> GetAllSeasons(string? seasonName = null, DateTime? startDate = null, bool activeOnly = false, int? gardenId = null)
         {
             try
             {
-                List<GetSeason> seasons = await _seasonService.GetAllSeasonsAsync(seasonName, startDate, activeOnly);
+                List<GetSeason> seasons = await _seasonService.GetAllSeasonsAsync(seasonName, startDate, activeOnly, gardenId);
                 return Ok(new
                 {
                     Data = seasons
